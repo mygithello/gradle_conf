@@ -1,0 +1,241 @@
+plugins {
+    id 'java'
+    id 'war' //build 下出现war
+}
+
+group 'com.demo.conf'
+version '1.0-SNAPSHOT'
+
+// 指定编译 .java 文件的 JDK 版本
+sourceCompatibility = 1.8
+
+repositories {
+    mavenLocal() //使用本地仓库
+
+    mavenCentral() //使用固定的maven中心仓库
+    //使用阿里云仓库
+    /*maven {
+        url 'http://maven.aliyun.com/nexus/content/groups/public/'
+    }*/
+
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    //添加maven依赖
+    // 该依赖对于编译发行是必须的
+    //compile('org.springframework.boot:spring-boot-starter-web')
+    // 添加 Thymeleaf 的依赖
+    compile('org.springframework.boot:spring-boot-starter-thymeleaf')
+    // 添加  Spring Security 依赖
+    compile('org.springframework.boot:spring-boot-starter-security')
+    // 添加 Spring Boot 开发工具依赖
+    //compile("org.springframework.boot:spring-boot-devtools")
+    // 添加 Spring Data JPA 的依赖
+    compile('org.springframework.boot:spring-boot-starter-data-jpa')
+    // 添加 MySQL连接驱动 的依赖
+    compile('mysql:mysql-connector-java:6.0.5')
+    // 添加   Thymeleaf Spring Security 依赖，与 Thymeleaf 版本一致都是 3.x
+    compile('org.thymeleaf.extras:thymeleaf-extras-springsecurity4:3.0.2.RELEASE')
+    // 添加  Apache Commons Lang 依赖
+    compile('org.apache.commons:commons-lang3:3.5')
+    // 该依赖对于编译测试是必须的，默认包含编译产品依赖和编译时依
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+
+
+}
+
+
+static def releaseTime() {
+    return new Date().format("yyyyMMddHHmm", TimeZone.getDefault())
+}
+
+/*----------自定义--------task 的定义,会出现再Tasks  下的other,下-----------*/
+//=====1===========创建task两种方式 :=========start=========
+//第一种方法，直接使用project的task()方法创建
+task helloTask{
+    println 'this is helloTask'
+}
+
+//第二种方法，使用TaskContainer创建task
+this.tasks.create(name:'helloTask2'){
+    println 'this is helloTask2'
+}
+//=====1===========创建task两种方式 :==========end========
+
+//=====2==========配置task的两种方式 :=========start=========
+//第一种方法，直接使用project的task()方法创建
+//第一种配置方法，创建的时候就配置task的group和description
+//description就是个说明，类似对注释
+task helloTask3(group:'hard',description:'task learn'){
+    println 'this is helloTask3'
+}
+
+this.tasks.create(name:'helloTask4'){
+    //第二种配置方式：直接在闭包中配置
+    setGroup('hard')
+    setDescription('task learn')
+    println 'this is helloTask4'
+}
+
+//--------------------task group的特点---相当于再Tasks，下创建一个组（文件夹）
+this.tasks.create(name:'helloTask5'){
+    //第二种配置方式：直接在闭包中配置
+    setGroup('hard2')
+    setDescription('task learn')
+    println 'this is helloTask5' //如果加载配置，打印出一条语句记录
+}
+//=====2==========配置task的两种方式 :=======end===========
+
+
+//----3-------------task-的执行顺序--------start---------
+//第一种方法，直接使用project的task()方法创建
+//配置的时候就配置task的group和description
+//description就是个说明，类似对注释
+task helloTask6(group:'hard3',description:'task learn hard3'){
+
+    //直接写在闭包里面的，是在配置阶段就执行的
+    //配置task的时候，会直接加载执行
+    println 'this is helloTask6 test order1'
+    println 'this is helloTask6 test order2'
+
+    //加载该task配置的时候，不执行，只有在运行的时候，才执行（任务运行时才执行）
+    doLast {
+        println 'task in do last6'   //运行任务时，会最后一个执行
+    }
+    doFirst {
+        println 'task in do first6'  //运行任务时，会第一个执行
+    }
+
+}
+//------3-------------task-的执行顺序--end--------
+
+//--------4----------计算build的时间-----------------------------start---------
+
+def startBuildTime
+def endBuildTime
+
+//配置完后，所有的task的拓扑图都已经生成好了
+//保证要找的task已经配置完毕
+/*this.afterEvaluate { Project project ->
+
+    //找到第一个执行的task
+    def preBuildTask = project.tasks.getByName('helloTask2')
+    preBuildTask.doFirst {
+        startBuildTime = System.currentTimeMillis()
+        println 'the start time is:' + startBuildTime
+    }
+
+    //找到最后一个编译的build任务
+    def buildTask = project.tasks.getByName('helloTask3')
+    buildTask.doLast {
+        endBuildTime = System.currentTimeMillis()
+        println 'the build time is:' + (endBuildTime - startBuildTime)
+    }
+}*/
+//-------4----------计算build的时间-----------------------------end---------
+
+//----------5-----------------task的依赖关系------start------
+//---------定义方式1-------------
+task taskB {
+    doLast {
+        println '我是taskB'
+    }
+}
+
+//定义一个taskA,且依赖于taskB//先运行taskB再运行taskA
+task taskA(dependsOn: taskB) {
+    doLast {
+        println '我是taskA'
+    }
+}
+//---------定义方式2-------------
+task taskBB {
+    doLast {
+        println '我是taskBB'
+    }
+}
+
+//定义一个taskA
+task taskAA() {
+    doLast {
+        println '我是taskA'
+    }
+}
+
+//定义之后，再依赖于taskB
+taskAA.dependsOn taskBB
+
+//---------定义方式2.2------------
+
+//或者在定义的时候
+task taskA3(dependsOn:['taskA','taskAA']) {
+    doLast {
+        println '我是taskA3'
+    }
+}
+//------------------------
+task taskA4{
+    doLast {
+        println '我是taskA4'
+    }
+}
+taskA4.dependsOn 'taskA','taskAA'
+//----------6-----------------task的依赖关系--------end----
+
+//-----------7-----------小技巧-----------buit-构建之后执行task，-----start-------------
+task printTask {
+    doLast {
+        println '我是printTask'
+    }
+}
+
+
+
+afterEvaluate{ project ->
+    def buildTask = project.tasks.findByName('build')
+    if(buildTask == null){
+        throw new GradleException('the build task is not found')
+    }
+
+    //在buildTask后添加doLast，并在里面执行printTask
+    //这样我们就把自定义的task挂到build构建过程中了
+    buildTask.doLast {
+        printTask.execute()
+    }
+}
+
+//------------7---小技巧-----------buit-构建之后执行task，----end-------
+
+
+
+
+
+//删除 旧的.jar包 任务
+task clearJar(type: Delete) {
+    FileTree tree = fileTree("build/libs/")
+    tree.visit {
+        element ->
+            if (element.getName().endsWith(".jar")) {
+                println "$element.file.name" + " " + element.getName()
+                delete element.file
+            }
+    }
+}
+
+/*
+
+task makeJar(type: Jar){
+    //指定生成的jar名
+    baseName 'gradle-conf-test'+ releaseTime()
+    //从哪里打包class文件
+    from('build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/com/hd/test/sdk/')
+    //打包到jar后的目录结构
+    into('com/hd/test/sdk/')
+    //去掉不需要打包的目录和文件
+    exclude('BuildConfig.class','R.class')
+    //去掉R$开头的文件
+    exclude{it.name.startsWith('R$')}
+}
+makeJar.dependsOn(clearJar,build)
+*/
