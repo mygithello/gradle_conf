@@ -17,13 +17,6 @@ plugins {
 }
 
 
-// 打包的类型为 jar，并指定了生成的打包的文件名称和版本
-jar {
-    baseName = 'gradle_conf-test'
-    version = '1.0.0'
-}
-
-
 group = 'com.demo.gradleconf'
 version = '0.0.1-SNAPSHOT'
 //指定编译 .java 文件的 JDK 版本
@@ -80,7 +73,7 @@ dependencies {
 
 //删除 旧的.jar包 任务
 task clearJar(type: Delete) {
-    FileTree tree = fileTree("build/libs/")
+    FileTree tree = fileTree("build/libs/test")
     tree.visit {
         element ->
             if (element.getName().endsWith(".jar")) {
@@ -94,19 +87,37 @@ static def releaseTime() {
     return new Date().format("yyyyMMddHHmm", TimeZone.getDefault())
 }
 
+
+
+
+
 task makeJar(type: Jar){
     //指定生成的jar名
-    baseName 'gradle-conf-test'+ releaseTime()
-    //从哪里打包class文件
-    from('out/production/classes/com/test')
-    //打包到jar后的目录结构
+    baseName "jar-name"+ "-"+releaseTime()
 
-    into('com/test/')
+    version = '1.0.2'
+    manifest {
+        attributes 'Main-Class':'com.demo.gradleconf.Test'
+    }
+
+    //从哪里打包class文件
+    from('out/production/classes')
+
+    //打包到jar后的目录结构(jar包内最外层目录)
+    into('')
+    //目标文件夹//不配置该项,默认问ｂuild/libs下
+    destinationDir = file('build/libs/test')
+
+//    from zipTree(zipFile)
+//    from fileTree(dir:'src/main',includes:['assets/**']) //包含assets文件
+
     //去掉不需要打包的目录和文件
 //    exclude('BuildConfig.class','R.class')
 //    //去掉R$开头的文件
 //    exclude{it.name.startsWith('R$')}
 }
+
+
 makeJar.dependsOn(clearJar,build)
 
 
