@@ -1,2 +1,3 @@
 rootProject.name = 'gradle_conf'
 
+//含必要的一些设置，例如，任务或项目之间的依懒关系等。
